@@ -1,14 +1,14 @@
 const express = require("express");
 const cors = require("cors");
+require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-
-const uri =
-  "mongodb+srv://smartdbuser:GadTu43W7SofmAFr@cluster0.led5d7b.mongodb.net/?appName=Cluster0";
+console.log(`Hello `);
+const uri = `mongodb+srv://${process.env.USER_BD}:${process.env.PASS_BD}@cluster0.led5d7b.mongodb.net/?appName=Cluster0`;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -26,8 +26,17 @@ const run = async () => {
     await client.connect();
 
     const productsCollection = client.db("smart_db").collection("products");
+    const bidsCollection = client.db("smart_db").collection("bids");
+
     app.get("/products", async (req, res) => {
-      const cursor = productsCollection.find();
+      const email = req.query.email;
+      const query = {};
+      if (email) {
+        query.email = email;
+      }
+
+      const cursor = productsCollection.find(query);
+
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -59,6 +68,19 @@ const run = async () => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await productsCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // bids
+    app.get("/bids", async (req, res) => {
+      const email = req.query.email;
+      const query = {};
+      if (email) {
+        query.buyer_email = email;
+      }
+
+      const cursor = bidsCollection.find(query);
+      const result = await cursor.toArray();
       res.send(result);
     });
 
