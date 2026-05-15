@@ -27,7 +27,22 @@ const run = async () => {
 
     const productsCollection = client.db("smart_db").collection("products");
     const bidsCollection = client.db("smart_db").collection("bids");
+    const usersCollection = client.db("smart_db").collection("users");
 
+    app.post("/users", async (req, res) => {
+      const newUser = req.body;
+      const email = req.body.email;
+      const query = { email: email };
+      const existingUser = await usersCollection.findOne(query);
+      if (existingUser) {
+        res.send({
+          message: "user already exist. do not need to insert again",
+        });
+      } else {
+        const result = await usersCollection.insertOne(newUser);
+        res.send(result);
+      }
+    });
     app.get("/products", async (req, res) => {
       const email = req.query.email;
       const query = {};
@@ -78,9 +93,15 @@ const run = async () => {
       if (email) {
         query.buyer_email = email;
       }
-
       const cursor = bidsCollection.find(query);
       const result = await cursor.toArray();
+      res.send(result);
+    });
+    //delete bid
+    app.delete("/bids/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bidsCollection.deleteOne(query);
       res.send(result);
     });
 
